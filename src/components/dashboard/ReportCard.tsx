@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Report } from '@/types/report';
@@ -8,9 +7,10 @@ import { Clock, Image } from 'lucide-react';
 interface ReportCardProps {
   report: Report;
   className?: string;
+  style?: React.CSSProperties; // Add style prop to support animation delay
 }
 
-const ReportCard: React.FC<ReportCardProps> = ({ report, className }) => {
+const ReportCard: React.FC<ReportCardProps> = ({ report, className, style }) => {
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -36,7 +36,8 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, className }) => {
     <div className={cn(
       "group eco-card animate-enter",
       className
-    )}>
+    )}
+    style={style}>
       <div className="flex gap-3">
         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
           <ReportTypeIcon type={report.type} />
