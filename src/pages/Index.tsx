@@ -7,6 +7,7 @@ import ReportCard from '@/components/dashboard/ReportCard';
 import { MapPin } from 'lucide-react';
 import PageTransition from '@/components/layout/PageTransition';
 import Navigation from '@/components/layout/Navigation';
+import { Report } from '@/types/report';
 
 // Mock data - would be replaced with real API calls
 const mockAirQuality = {
@@ -17,7 +18,8 @@ const mockAirQuality = {
   temperature: 24
 } as const;
 
-const mockReports = [
+// Create proper Report objects from mock data
+const mockReports: Report[] = [
   {
     id: '1',
     type: 'Water Pollution',
@@ -35,7 +37,7 @@ const mockReports = [
     status: 'Resolved',
     reportedAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
   }
-] as const;
+];
 
 const Index = () => {
   return (

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { AirQuality } from '@/types/report';
-import { Droplets, Thermometer, Wind } from 'lucide-react';
+import { Droplets, MapPin, Thermometer, Wind } from 'lucide-react';
 
 interface AirQualityCardProps {
   airQuality: AirQuality;

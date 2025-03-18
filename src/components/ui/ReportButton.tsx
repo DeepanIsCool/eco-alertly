@@ -8,12 +8,14 @@ interface ReportButtonProps {
   className?: string;
   variant?: 'default' | 'outline';
   label?: string;
+  style?: React.CSSProperties;
 }
 
 const ReportButton: React.FC<ReportButtonProps> = ({ 
   className,
   variant = 'default',
-  label = 'Report Hazard Now'
+  label = 'Report Hazard Now',
+  style
 }) => {
   return (
     <Link
@@ -25,6 +27,7 @@ const ReportButton: React.FC<ReportButtonProps> = ({
           : "bg-secondary text-secondary-foreground py-3 px-4 hover:bg-secondary/80",
         className
       )}
+      style={style}
     >
       <AlertTriangle className="w-5 h-5 mr-2" />
       {label}
