@@ -1,10 +1,44 @@
 
 import { AirQuality } from '@/types/report';
 
+// Dummy data for air quality
+const DUMMY_AIR_QUALITY: AirQuality = {
+  index: 45,
+  level: 'Moderate',
+  pm25: 22,
+  humidity: 65,
+  temperature: 24
+};
+
+// Function to generate slight variations in the dummy data to make it seem more realistic
+const getVariedDummyData = (): AirQuality => {
+  const variation = Math.floor(Math.random() * 20) - 10; // -10 to +10
+  const index = Math.max(0, Math.min(500, DUMMY_AIR_QUALITY.index + variation));
+  
+  // Determine level based on index
+  let level: AirQuality['level'];
+  if (index <= 50) level = 'Good';
+  else if (index <= 100) level = 'Moderate';
+  else if (index <= 150) level = 'Unhealthy';
+  else level = 'Hazardous';
+  
+  return {
+    index,
+    level,
+    pm25: Math.max(0, Math.min(500, DUMMY_AIR_QUALITY.pm25 + Math.floor(variation / 2))),
+    humidity: Math.max(20, Math.min(90, DUMMY_AIR_QUALITY.humidity + Math.floor(variation / 3))),
+    temperature: Math.max(10, Math.min(35, DUMMY_AIR_QUALITY.temperature + Math.floor(variation / 5)))
+  };
+};
+
 export const getAirQuality = async (
   latitude: number, 
   longitude: number
 ): Promise<AirQuality> => {
+  // Return dummy data instead of making API calls
+  return getVariedDummyData();
+
+  /* Commented out OpenWeather API integration
   try {
     // Using the Open Weather Map API for air quality data
     // You will need to replace 'YOUR_API_KEY' with an actual API key
@@ -66,12 +100,7 @@ export const getAirQuality = async (
     console.error('Error fetching air quality:', error);
     
     // Return fallback data in case of error
-    return {
-      index: 50,
-      level: 'Moderate',
-      pm25: 25,
-      humidity: 60,
-      temperature: 22
-    };
+    return getVariedDummyData();
   }
+  */
 };

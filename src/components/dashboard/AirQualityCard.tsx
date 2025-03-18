@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { AirQuality } from '@/types/report';
@@ -7,12 +8,14 @@ interface AirQualityCardProps {
   airQuality: AirQuality;
   location?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const AirQualityCard: React.FC<AirQualityCardProps> = ({ 
   airQuality, 
   location,
-  className 
+  className,
+  style
 }) => {
   const getQualityColor = (level: string) => {
     switch (level) {
@@ -27,9 +30,9 @@ const AirQualityCard: React.FC<AirQualityCardProps> = ({
 
   return (
     <div className={cn(
-      "eco-card animate-enter",
+      "eco-card animate-enter eco-glow",
       className
-    )}>
+    )} style={style}>
       {location && (
         <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
           <MapPin className="w-4 h-4" />
