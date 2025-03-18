@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
@@ -16,6 +15,7 @@ import {
 import { Camera, MapPin, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReportType } from '@/types/report';
+import { useGeolocation } from '@/hooks/use-geolocation';
 
 const reportTypes: ReportType[] = [
   'Water Pollution',
@@ -34,13 +34,24 @@ const severityLevels = [
 
 const Report = () => {
   const navigate = useNavigate();
+  const { location } = useGeolocation();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: '',
     description: '',
     severity: '',
-    location: 'Downtown Area'
+    location: ''
   });
+
+  React.useEffect(() => {
+    if (location?.name) {
+      setFormData(prev => ({
+        ...prev,
+        location: location.name
+      }));
+    }
+  }, [location]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -65,7 +76,11 @@ const Report = () => {
 
   return (
     <>
-      <Header title="Report Environmental Hazard" showNotifications={false} />
+      <Header 
+        title="Report Environmental Hazard" 
+        showNotifications={false} 
+        showBackButton={true}
+      />
       
       <PageTransition className="pb-10">
         <div className="eco-container">
@@ -147,10 +162,12 @@ const Report = () => {
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  disabled
-                  className="bg-muted"
+                  disabled={!!location}
+                  className={location ? "bg-muted" : ""}
                 />
-                <p className="text-xs text-muted-foreground">Location is automatically detected</p>
+                <p className="text-xs text-muted-foreground">
+                  {location ? "Location automatically detected" : "Please allow location access"}
+                </p>
               </div>
             </div>
             
