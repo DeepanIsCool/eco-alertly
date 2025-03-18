@@ -3,6 +3,7 @@ import React from 'react';
 import { Bell, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
 
 interface HeaderProps {
   title: string;
@@ -17,6 +18,33 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  const handleNotificationClick = () => {
+    // Mock notifications
+    const notifications = [
+      { id: 1, title: "New Report", description: "A new water pollution report has been submitted near your area." },
+      { id: 2, title: "Status Update", description: "The chemical spill report you submitted has been marked as 'In Progress'." },
+      { id: 3, title: "Community Alert", description: "Air quality in your area has decreased. Consider staying indoors." }
+    ];
+    
+    // Show the most recent notification as a toast
+    const latestNotification = notifications[0];
+    toast({
+      title: latestNotification.title,
+      description: latestNotification.description,
+      duration: 5000,
+    });
+    
+    // After a delay, show another notification
+    setTimeout(() => {
+      const secondNotification = notifications[1];
+      toast({
+        title: secondNotification.title,
+        description: secondNotification.description,
+        duration: 5000,
+      });
+    }, 1000);
+  };
 
   return (
     <header className="py-4 flex justify-between items-center eco-container animate-fade-in">
@@ -34,7 +62,10 @@ const Header: React.FC<HeaderProps> = ({
       
       <div className="flex gap-2">
         {showNotifications && (
-          <button className="w-10 h-10 rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-colors duration-200">
+          <button 
+            onClick={handleNotificationClick} 
+            className="w-10 h-10 rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-colors duration-200"
+          >
             <Bell className="w-5 h-5" />
           </button>
         )}

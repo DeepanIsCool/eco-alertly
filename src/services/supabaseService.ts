@@ -1,12 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Report } from '@/types/report';
-
-// Initialize Supabase client
-// Replace with your Supabase URL and public key
-const supabaseUrl = 'https://your-project-url.supabase.co';
-const supabaseKey = 'your-public-anon-key';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from '@/integrations/supabase/client';
 
 export const getRecentReports = async (): Promise<Report[]> => {
   try {
@@ -46,18 +41,46 @@ export const getRecentReports = async (): Promise<Report[]> => {
         id: '1',
         type: 'Water Pollution',
         description: 'Oil spill observed in river near industrial area',
-        location: { name: 'Downtown Area' },
+        location: { name: 'Downtown River' },
         status: 'Under Investigation',
         reportedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        mediaUrls: ['image1.jpg']
+        mediaUrls: ['image1.jpg', 'image2.jpg']
       },
       {
         id: '2',
         type: 'Noise Pollution',
         description: 'Excessive construction noise during quiet hours',
-        location: { name: 'Downtown Area' },
+        location: { name: 'Residential Zone B' },
         status: 'Resolved',
-        reportedAt: new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 hours ago
+        reportedAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+        mediaUrls: []
+      },
+      {
+        id: '3',
+        type: 'Air Pollution',
+        description: 'Heavy smoke coming from factory chimney outside permitted hours',
+        location: { name: 'Industrial Park' },
+        status: 'Critical',
+        reportedAt: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
+        mediaUrls: ['smoke.jpg']
+      },
+      {
+        id: '4',
+        type: 'Chemical Spill',
+        description: 'Unknown chemical leaking from truck on highway',
+        location: { name: 'Route 7, Mile 23' },
+        status: 'In Progress',
+        reportedAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+        mediaUrls: ['spill1.jpg', 'spill2.jpg']
+      },
+      {
+        id: '5',
+        type: 'Water Pollution',
+        description: 'Algae bloom observed in community lake',
+        location: { name: 'Memorial Park Lake' },
+        status: 'Under Investigation',
+        reportedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
+        mediaUrls: []
       }
     ];
   }
