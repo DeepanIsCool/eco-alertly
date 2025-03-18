@@ -5,7 +5,7 @@ import { AirQuality } from '@/types/report';
 import { Droplets, MapPin, Thermometer, Wind } from 'lucide-react';
 
 interface AirQualityCardProps {
-  airQuality: AirQuality;
+  airQuality?: AirQuality;
   location?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -17,6 +17,20 @@ const AirQualityCard: React.FC<AirQualityCardProps> = ({
   className,
   style
 }) => {
+  // Add a loading or error state if airQuality is undefined
+  if (!airQuality) {
+    return (
+      <div className={cn(
+        "eco-card animate-enter eco-glow",
+        className
+      )} style={style}>
+        <div className="flex items-center justify-center h-40">
+          <p className="text-muted-foreground">Air quality data unavailable</p>
+        </div>
+      </div>
+    );
+  }
+  
   const getQualityColor = (level: string) => {
     switch (level) {
       case 'Good': return 'text-eco-green';

@@ -21,10 +21,15 @@ const Index = () => {
     isLoading: airQualityLoading 
   } = useQuery({
     queryKey: ['airQuality', location?.coordinates?.latitude, location?.coordinates?.longitude],
-    queryFn: () => getAirQuality(
-      location?.coordinates?.latitude || 0, 
-      location?.coordinates?.longitude || 0
-    ),
+    queryFn: () => {
+      if (!location?.coordinates?.latitude || !location?.coordinates?.longitude) {
+        return Promise.resolve(undefined);
+      }
+      return getAirQuality(
+        location.coordinates.latitude, 
+        location.coordinates.longitude
+      );
+    },
     enabled: !!location?.coordinates,
     refetchOnWindowFocus: false
   });
@@ -68,7 +73,7 @@ const Index = () => {
             <div className="eco-card h-40 animate-pulse animate-fade-in" style={{ animationDelay: '0.3s' }} />
           ) : (
             <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <AirQualityCard airQuality={airQuality!} />
+              <AirQualityCard airQuality={airQuality} />
             </div>
           )}
           
@@ -85,9 +90,9 @@ const Index = () => {
                   />
                 ))}
               </div>
-            ) : (
+            ) : reports && reports.length > 0 ? (
               <div className="space-y-3">
-                {reports?.map((report, index) => (
+                {reports.map((report, index) => (
                   <ReportCard 
                     key={report.id} 
                     report={report} 
@@ -95,6 +100,10 @@ const Index = () => {
                     style={{ animationDelay: `${0.5 + index * 0.1}s` }}
                   />
                 ))}
+              </div>
+            ) : (
+              <div className="eco-card p-4 text-center text-muted-foreground">
+                No recent reports available
               </div>
             )}
           </div>
