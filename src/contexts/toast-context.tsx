@@ -120,6 +120,12 @@ interface ToastContextType {
   updateToast: (toast: Partial<ToasterToast>) => void;
   dismissToast: (toastId?: string) => void;
   removeToast: (toastId?: string) => void;
+  toast: {
+    success: (props: Omit<ToasterToast, "id" | "open">) => string;
+    error: (props: Omit<ToasterToast, "id" | "open">) => string;
+    warning: (props: Omit<ToasterToast, "id" | "open">) => string;
+    info: (props: Omit<ToasterToast, "id" | "open">) => string;
+  };
 }
 
 const ToastContext = createContext<ToastContextType>({
@@ -128,16 +134,22 @@ const ToastContext = createContext<ToastContextType>({
   updateToast: () => {},
   dismissToast: () => {},
   removeToast: () => {},
+  toast: {
+    success: () => "",
+    error: () => "",
+    warning: () => "",
+    info: () => "",
+  },
 });
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<State>({ toasts: [] });
 
-  const addToast = (toast: Omit<ToasterToast, "id" | "open">) => {
-    const id = toast.id || generateId();
+  const addToast = (props: Omit<ToasterToast, "id" | "open">) => {
+    const id = generateId();
 
     const newToast = {
-      ...toast,
+      ...props,
       id,
       open: true,
     };
@@ -179,6 +191,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  // Toast variants
+  const toast = {
+    success: (props: Omit<ToasterToast, "id" | "open">) => {
+      return addToast({ ...props, variant: "default" });
+    },
+    error: (props: Omit<ToasterToast, "id" | "open">) => {
+      return addToast({ ...props, variant: "destructive" });
+    },
+    warning: (props: Omit<ToasterToast, "id" | "open">) => {
+      return addToast({ ...props });
+    },
+    info: (props: Omit<ToasterToast, "id" | "open">) => {
+      return addToast({ ...props });
+    },
+  };
+
   useEffect(() => {
     state.toasts.forEach((toast) => {
       if (toast.open && !toastTimeouts.has(toast.id)) {
@@ -207,6 +235,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         updateToast,
         dismissToast,
         removeToast,
+        toast,
       }}
     >
       {children}

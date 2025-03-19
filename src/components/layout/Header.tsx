@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Bell, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   title: string;
@@ -18,6 +17,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleNotificationClick = () => {
     // Mock notifications
@@ -29,19 +29,17 @@ const Header: React.FC<HeaderProps> = ({
     
     // Show the most recent notification as a toast
     const latestNotification = notifications[0];
-    toast({
+    toast.success({
       title: latestNotification.title,
       description: latestNotification.description,
-      duration: 5000,
     });
     
     // After a delay, show another notification
     setTimeout(() => {
       const secondNotification = notifications[1];
-      toast({
+      toast.success({
         title: secondNotification.title,
         description: secondNotification.description,
-        duration: 5000,
       });
     }, 1000);
   };
