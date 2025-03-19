@@ -225,23 +225,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export const toast = {
   success: (props: Omit<ToasterToast, "id" | "open">) => {
-    const context = useContext(ToastContext);
-    if (!context) return "";
-    return context.addToast({ ...props, variant: "default" });
+    const { addToast } = useToast();
+    return addToast({ ...props, variant: "default" });
   },
   error: (props: Omit<ToasterToast, "id" | "open">) => {
-    const context = useContext(ToastContext);
-    if (!context) return "";
-    return context.addToast({ ...props, variant: "destructive" });
+    const { addToast } = useToast();
+    return addToast({ ...props, variant: "destructive" });
   },
   warning: (props: Omit<ToasterToast, "id" | "open">) => {
-    const context = useContext(ToastContext);
-    if (!context) return "";
-    return context.addToast({ ...props });
+    const { addToast } = useToast();
+    return addToast({ ...props });
   },
   info: (props: Omit<ToasterToast, "id" | "open">) => {
-    const context = useContext(ToastContext);
-    if (!context) return "";
-    return context.addToast({ ...props });
+    const { addToast } = useToast();
+    return addToast({ ...props });
   }
 };
