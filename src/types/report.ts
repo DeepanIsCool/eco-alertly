@@ -1,7 +1,7 @@
 
 export type ReportType = 'Water Pollution' | 'Air Pollution' | 'Noise Pollution' | 'Chemical Spill' | 'Other';
 
-export type ReportStatus = 'Pending' | 'Under Investigation' | 'Resolved' | 'Rejected';
+export type ReportStatus = 'Pending' | 'Under Investigation' | 'In Progress' | 'Resolved' | 'Rejected' | 'Critical';
 
 export interface Report {
   id: string;
