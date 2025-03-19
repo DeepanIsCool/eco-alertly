@@ -1,4 +1,5 @@
-import type { ToasterToast } from "@/contexts/toast-context";
+
+import type { ToasterToast } from "@/contexts/toast";
 
 // Function to safely execute a toast function
 const executeToast = (toastFn: () => string): string => {
