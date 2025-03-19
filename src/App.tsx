@@ -5,6 +5,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ToastProvider } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { useToastContext } from "@/contexts/toast";
+import { setToastContext } from "@/utils/toast";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 import Report from "./pages/Report";
 import Map from "./pages/Map";
@@ -14,10 +17,21 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function ToastInitializer() {
+  const toastContext = useToastContext();
+  
+  useEffect(() => {
+    setToastContext(toastContext);
+  }, [toastContext]);
+  
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <ToastProvider>
+        <ToastInitializer />
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>

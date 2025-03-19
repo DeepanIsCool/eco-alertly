@@ -4,21 +4,8 @@ import type { ToastContextType, ToasterToast, State } from "./types";
 import { toastTimeouts } from "./toast-reducer";
 import { generateId, TOAST_TIMEOUT } from "./toast-utils";
 
-const ToastContext = createContext<ToastContextType>({
-  toasts: [],
-  addToast: () => "",
-  updateToast: () => {},
-  dismissToast: () => {},
-  removeToast: () => {},
-  toast: {
-    success: () => "",
-    error: () => "",
-    warning: () => "",
-    info: () => "",
-  },
-});
-
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+// Custom hook to manage toast state
+function useToastState() {
   const [state, setState] = useState<State>({ toasts: [] });
 
   const addToast = (props: Omit<ToasterToast, "id" | "open">) => {
@@ -83,6 +70,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     },
   };
 
+  // Manage timeouts
   useEffect(() => {
     state.toasts.forEach((toast) => {
       if (toast.open && !toastTimeouts.has(toast.id)) {
@@ -103,17 +91,35 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     };
   }, [state.toasts]);
 
+  return {
+    toasts: state.toasts,
+    addToast,
+    updateToast,
+    dismissToast, 
+    removeToast,
+    toast
+  };
+}
+
+const ToastContext = createContext<ToastContextType>({
+  toasts: [],
+  addToast: () => "",
+  updateToast: () => {},
+  dismissToast: () => {},
+  removeToast: () => {},
+  toast: {
+    success: () => "",
+    error: () => "",
+    warning: () => "",
+    info: () => "",
+  },
+});
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const toastState = useToastState();
+  
   return (
-    <ToastContext.Provider
-      value={{
-        toasts: state.toasts,
-        addToast,
-        updateToast,
-        dismissToast,
-        removeToast,
-        toast,
-      }}
-    >
+    <ToastContext.Provider value={toastState}>
       {children}
     </ToastContext.Provider>
   );
