@@ -223,21 +223,73 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Create a toast object with methods that can be imported and used directly
+// These helper functions properly call useToast() inside components
 export const toast = {
   success: (props: Omit<ToasterToast, "id" | "open">) => {
-    const { addToast } = useToast();
-    return addToast({ ...props, variant: "default" });
+    // We need to create a function that gets the toast context when called
+    const toastFunction = () => {
+      const { addToast } = useToast();
+      return addToast({ ...props, variant: "default" });
+    };
+    
+    // If we're in a component, call the function right away
+    if (typeof document !== "undefined") {
+      try {
+        return toastFunction();
+      } catch (e) {
+        console.error("Toast could not be displayed:", e);
+        return "";
+      }
+    }
+    return "";
   },
   error: (props: Omit<ToasterToast, "id" | "open">) => {
-    const { addToast } = useToast();
-    return addToast({ ...props, variant: "destructive" });
+    const toastFunction = () => {
+      const { addToast } = useToast();
+      return addToast({ ...props, variant: "destructive" });
+    };
+    
+    if (typeof document !== "undefined") {
+      try {
+        return toastFunction();
+      } catch (e) {
+        console.error("Toast could not be displayed:", e);
+        return "";
+      }
+    }
+    return "";
   },
   warning: (props: Omit<ToasterToast, "id" | "open">) => {
-    const { addToast } = useToast();
-    return addToast({ ...props });
+    const toastFunction = () => {
+      const { addToast } = useToast();
+      return addToast({ ...props });
+    };
+    
+    if (typeof document !== "undefined") {
+      try {
+        return toastFunction();
+      } catch (e) {
+        console.error("Toast could not be displayed:", e);
+        return "";
+      }
+    }
+    return "";
   },
   info: (props: Omit<ToasterToast, "id" | "open">) => {
-    const { addToast } = useToast();
-    return addToast({ ...props });
+    const toastFunction = () => {
+      const { addToast } = useToast();
+      return addToast({ ...props });
+    };
+    
+    if (typeof document !== "undefined") {
+      try {
+        return toastFunction();
+      } catch (e) {
+        console.error("Toast could not be displayed:", e);
+        return "";
+      }
+    }
+    return "";
   }
 };
