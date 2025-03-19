@@ -224,16 +224,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 // Create a toast object with methods that can be imported and used directly
-// These helper functions properly call useToast() inside components
 export const toast = {
   success: (props: Omit<ToasterToast, "id" | "open">) => {
-    // We need to create a function that gets the toast context when called
+    // Create a function to be called in a component context
     const toastFunction = () => {
       const { addToast } = useToast();
       return addToast({ ...props, variant: "default" });
     };
     
-    // If we're in a component, call the function right away
+    // Make sure we're in browser environment and handle errors
     if (typeof document !== "undefined") {
       try {
         return toastFunction();
