@@ -1,26 +1,46 @@
 
 import type { ToasterToast } from "@/contexts/toast";
+import { useToastContext } from "@/contexts/toast";
 
-// Function to safely execute a toast function
-const executeToast = (toastFn: () => string): string => {
-  if (typeof document !== "undefined") {
-    try {
-      return toastFn();
-    } catch (e) {
-      console.error("Toast could not be displayed:", e);
-      return "";
-    }
-  }
-  return "";
+// Get the toast context
+let toastContext: ReturnType<typeof useToastContext> | null = null;
+
+// Function to initialize the toast context
+export const setToastContext = (context: ReturnType<typeof useToastContext>) => {
+  toastContext = context;
 };
 
 // Create a toast object with methods that can be imported and used directly
 export const toast = {
-  success: (_props: Omit<ToasterToast, "id" | "open">): string => "__TOAST_PLACEHOLDER__",
+  success: (props: Omit<ToasterToast, "id" | "open">): string => {
+    if (toastContext) {
+      return toastContext.toast.success(props);
+    }
+    console.error("Toast context not initialized");
+    return "";
+  },
   
-  error: (_props: Omit<ToasterToast, "id" | "open">): string => "__TOAST_PLACEHOLDER__",
+  error: (props: Omit<ToasterToast, "id" | "open">): string => {
+    if (toastContext) {
+      return toastContext.toast.error(props);
+    }
+    console.error("Toast context not initialized");
+    return "";
+  },
   
-  warning: (_props: Omit<ToasterToast, "id" | "open">): string => "__TOAST_PLACEHOLDER__",
+  warning: (props: Omit<ToasterToast, "id" | "open">): string => {
+    if (toastContext) {
+      return toastContext.toast.warning(props);
+    }
+    console.error("Toast context not initialized");
+    return "";
+  },
   
-  info: (_props: Omit<ToasterToast, "id" | "open">): string => "__TOAST_PLACEHOLDER__"
+  info: (props: Omit<ToasterToast, "id" | "open">): string => {
+    if (toastContext) {
+      return toastContext.toast.info(props);
+    }
+    console.error("Toast context not initialized");
+    return "";
+  }
 };

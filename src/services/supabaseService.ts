@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Report } from '@/types/report';
+import { Report, ReportType, ReportStatus } from '@/types/report';
 import { supabase } from '@/integrations/supabase/client';
 
 export const getRecentReports = async (): Promise<Report[]> => {
@@ -18,24 +18,24 @@ export const getRecentReports = async (): Promise<Report[]> => {
     // Convert from Supabase format to our app's format
     return data.map(item => ({
       id: item.id,
-      type: item.type,
+      type: item.type as ReportType, // Cast to ensure it matches ReportType
       description: item.description,
       location: {
         name: item.location_name,
         coordinates: item.coordinates ? {
-          latitude: item.coordinates.latitude,
-          longitude: item.coordinates.longitude
+          latitude: typeof item.coordinates === 'object' ? (item.coordinates as any).latitude : undefined,
+          longitude: typeof item.coordinates === 'object' ? (item.coordinates as any).longitude : undefined
         } : undefined
       },
-      status: item.status,
+      status: item.status as ReportStatus, // Cast to ensure it matches ReportStatus
       reportedAt: new Date(item.reported_at),
       mediaUrls: item.media_urls || [],
-      severity: item.severity
+      severity: item.severity as 'Low' | 'Medium' | 'High' | 'Critical' | undefined
     }));
   } catch (error) {
     console.error('Error fetching reports:', error);
     
-    // Return mock data in case of error
+    // Return mock data in case of error - these mock values should match the Report type
     return [
       {
         id: '1',
