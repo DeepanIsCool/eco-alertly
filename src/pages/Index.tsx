@@ -37,8 +37,10 @@ const Index = () => {
     refetchOnWindowFocus: false,
     refetchInterval: 30 * 60 * 1000, // Refetch every 30 minutes
     retry: 2,
-    onError: () => {
-      toast.error('Unable to fetch air quality data. Please try again later.');
+    meta: {
+      onError: () => {
+        toast.error('Unable to fetch air quality data. Please try again later.');
+      }
     }
   });
   
