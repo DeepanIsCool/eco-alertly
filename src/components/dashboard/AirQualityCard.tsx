@@ -2,30 +2,57 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { AirQuality } from '@/types/report';
-import { Droplets, MapPin, Thermometer, Wind } from 'lucide-react';
+import { Droplets, MapPin, Thermometer, Wind, RefreshCw } from 'lucide-react';
 
 interface AirQualityCardProps {
   airQuality?: AirQuality;
   location?: string;
   className?: string;
   style?: React.CSSProperties;
+  isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
 const AirQualityCard: React.FC<AirQualityCardProps> = ({ 
   airQuality, 
   location,
   className,
-  style
+  style,
+  isLoading,
+  onRefresh
 }) => {
   // Add a loading or error state if airQuality is undefined
-  if (!airQuality) {
+  if (isLoading) {
     return (
       <div className={cn(
         "eco-card animate-enter eco-glow",
         className
       )} style={style}>
         <div className="flex items-center justify-center h-40">
+          <div className="animate-spin">
+            <RefreshCw className="w-8 h-8 text-eco-green/40" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!airQuality) {
+    return (
+      <div className={cn(
+        "eco-card animate-enter eco-glow",
+        className
+      )} style={style}>
+        <div className="flex flex-col items-center justify-center h-40 gap-3">
           <p className="text-muted-foreground">Air quality data unavailable</p>
+          {onRefresh && (
+            <button 
+              onClick={onRefresh}
+              className="flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-secondary/40 hover:bg-secondary transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" /> Retry
+            </button>
+          )}
         </div>
       </div>
     );
@@ -47,12 +74,24 @@ const AirQualityCard: React.FC<AirQualityCardProps> = ({
       "eco-card animate-enter eco-glow",
       className
     )} style={style}>
-      {location && (
-        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4" />
-          <span>Current Location: {location}</span>
-        </div>
-      )}
+      <div className="flex items-center justify-between mb-4">
+        {location && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4" />
+            <span>Current Location: {location}</span>
+          </div>
+        )}
+        
+        {onRefresh && (
+          <button 
+            onClick={onRefresh}
+            className="p-1 rounded-full hover:bg-secondary/50 transition-colors"
+            title="Refresh air quality data"
+          >
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+          </button>
+        )}
+      </div>
       
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-muted-foreground">Air Quality Index</h3>
@@ -61,8 +100,11 @@ const AirQualityCard: React.FC<AirQualityCardProps> = ({
             <span className="text-4xl font-bold">{airQuality.index}</span>
           </div>
           <div className={cn(
-            "text-sm font-medium",
-            getQualityColor(airQuality.level)
+            "text-sm font-medium px-3 py-1 rounded-full",
+            getQualityColor(airQuality.level),
+            airQuality.level === 'Good' ? 'bg-eco-green/10' : 
+            airQuality.level === 'Moderate' ? 'bg-status-investigating/10' : 
+            'bg-status-critical/10'
           )}>
             {airQuality.level}
           </div>

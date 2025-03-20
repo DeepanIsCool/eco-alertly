@@ -11,6 +11,7 @@ import Navigation from '@/components/layout/Navigation';
 import { useGeolocation } from '@/hooks/use-geolocation';
 import { getAirQuality } from '@/services/airQualityService';
 import { getRecentReports } from '@/services/supabaseService';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { location, loading: locationLoading, error: locationError } = useGeolocation();
@@ -18,7 +19,9 @@ const Index = () => {
   // Fetch air quality data
   const { 
     data: airQuality, 
-    isLoading: airQualityLoading 
+    isLoading: airQualityLoading,
+    refetch: refetchAirQuality,
+    isError: airQualityError
   } = useQuery({
     queryKey: ['airQuality', location?.coordinates?.latitude, location?.coordinates?.longitude],
     queryFn: () => {
@@ -31,7 +34,12 @@ const Index = () => {
       );
     },
     enabled: !!location?.coordinates,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    refetchInterval: 30 * 60 * 1000, // Refetch every 30 minutes
+    retry: 2,
+    onError: () => {
+      toast.error('Unable to fetch air quality data. Please try again later.');
+    }
   });
   
   // Fetch recent reports
@@ -43,6 +51,11 @@ const Index = () => {
     queryFn: getRecentReports,
     refetchOnWindowFocus: false
   });
+
+  const handleRefreshAirQuality = () => {
+    toast.info('Refreshing air quality data...');
+    refetchAirQuality();
+  };
   
   return (
     <>
@@ -69,13 +82,13 @@ const Index = () => {
           
           <ReportButton className="animate-fade-in" style={{ animationDelay: '0.2s' }} />
           
-          {airQualityLoading ? (
-            <div className="eco-card h-40 animate-pulse animate-fade-in" style={{ animationDelay: '0.3s' }} />
-          ) : (
-            <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <AirQualityCard airQuality={airQuality} />
-            </div>
-          )}
+          <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <AirQualityCard 
+              airQuality={airQuality} 
+              isLoading={airQualityLoading}
+              onRefresh={handleRefreshAirQuality}
+            />
+          </div>
           
           <div className="space-y-2 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <h2 className="text-lg font-semibold">Recent Reports</h2>
