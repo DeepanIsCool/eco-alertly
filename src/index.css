@@ -137,7 +137,46 @@
     animation-fill-mode: both;
   }
   
-  /* Glowing effects for dark mode */
+  /* Glowing effects for both light and dark mode */
+  .text-eco-green {
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+  
+  .bg-primary {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+  }
+  
+  .text-status-resolved {
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+  
+  .eco-card:hover {
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.1);
+  }
+  
+  .eco-glow {
+    @apply relative;
+  }
+  
+  .eco-glow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 0 20px 2px rgba(16, 185, 129, 0.15);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .eco-glow:hover::after {
+    opacity: 1;
+  }
+  
+  /* Darker glow for dark mode */
   .dark .text-eco-green {
     text-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
   }
@@ -154,25 +193,7 @@
     box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
   }
   
-  .dark .eco-glow {
-    @apply relative;
-  }
-  
   .dark .eco-glow::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    border-radius: inherit;
     box-shadow: 0 0 20px 2px rgba(16, 185, 129, 0.25);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  .dark .eco-glow:hover::after {
-    opacity: 1;
   }
 }

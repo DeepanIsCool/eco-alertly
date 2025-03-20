@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ToastProvider } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { useToastContext } from "@/contexts/toast";
 import { setToastContext } from "@/utils/toast";
 import { useEffect } from "react";
@@ -33,7 +33,7 @@ const App = () => (
       <ToastProvider>
         <ToastInitializer />
         <TooltipProvider>
-          <Toaster />
+          <Toaster position="top-right" closeButton richColors className="notification-toaster" />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
