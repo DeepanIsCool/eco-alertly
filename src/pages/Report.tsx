@@ -19,7 +19,13 @@ const Report = () => {
     setIsSubmitting(true);
     
     try {
-      await submitReport(reportData);
+      // Include media URLs in the report data
+      const completeReportData = {
+        ...reportData,
+        mediaUrls
+      };
+      
+      await submitReport(completeReportData);
       toast.success('Report submitted successfully');
       navigate('/');
     } catch (error) {

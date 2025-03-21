@@ -68,19 +68,23 @@ const ReportForm: React.FC<ReportFormProps> = ({
   const uploadFiles = async (): Promise<string[]> => {
     if (selectedFiles.length === 0) return [];
     
+    // Create the bucket if it doesn't exist (this is handled server-side via SQL)
+    const bucketName = 'report_media';
+    
     const uploadPromises = selectedFiles.map(async (file, index) => {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${index}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${uniqueFileName}`;
       
       const { data, error } = await supabase.storage
-        .from('report_media')
+        .from(bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
         });
       
       if (error) {
+        console.error('Error uploading file:', error);
         throw error;
       }
       
@@ -90,7 +94,7 @@ const ReportForm: React.FC<ReportFormProps> = ({
       
       // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
-        .from('report_media')
+        .from(bucketName)
         .getPublicUrl(filePath);
       
       return publicUrl;
@@ -178,8 +182,7 @@ const ReportForm: React.FC<ReportFormProps> = ({
           <>
             {uploadProgress > 0 && uploadProgress < 100 
               ? `Uploading... ${Math.round(uploadProgress)}%` 
-              : 'Submitting...'
-            }
+              : 'Submitting...'}
           </>
         ) : 'Submit Report'}
       </Button>

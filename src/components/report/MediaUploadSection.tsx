@@ -1,7 +1,9 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, Plus, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MediaUploadSectionProps {
   selectedFiles: File[];
@@ -16,6 +18,8 @@ const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
   previewUrls,
   setPreviewUrls
 }) => {
+  const [uploading, setUploading] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
@@ -24,6 +28,20 @@ const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
       // Limit to 5 files
       if (totalFiles.length > 5) {
         toast.error("Maximum of 5 files allowed");
+        return;
+      }
+
+      // Check file size (limit to 5MB each)
+      const oversizedFiles = newFiles.filter(file => file.size > 5 * 1024 * 1024);
+      if (oversizedFiles.length > 0) {
+        toast.error(`Some files exceed the 5MB size limit and won't be uploaded`);
+        // Filter out oversized files
+        const validFiles = newFiles.filter(file => file.size <= 5 * 1024 * 1024);
+        setSelectedFiles([...selectedFiles, ...validFiles]);
+        
+        // Create preview URLs for valid files
+        const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+        setPreviewUrls([...previewUrls, ...newPreviews]);
         return;
       }
 
@@ -110,7 +128,7 @@ const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
       )}
       
       <p className="text-xs text-muted-foreground mt-2">
-        Maximum 5 images. Accepted formats: JPEG, PNG.
+        Maximum 5 images. Accepted formats: JPEG, PNG. Max size: 5MB per image.
       </p>
     </div>
   );

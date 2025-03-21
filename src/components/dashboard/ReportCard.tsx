@@ -51,6 +51,10 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, className, style }) => 
                 src={url} 
                 alt={`Report ${index}`} 
                 className="w-full h-full object-cover" 
+                onError={(e) => {
+                  // Handle broken image by setting a placeholder
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
               />
             </div>
           ))}
