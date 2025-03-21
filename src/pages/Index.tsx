@@ -47,11 +47,18 @@ const Index = () => {
   // Fetch recent reports
   const { 
     data: reports, 
-    isLoading: reportsLoading 
+    isLoading: reportsLoading,
+    isError: reportsError
   } = useQuery({
     queryKey: ['reports'],
     queryFn: getRecentReports,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    retry: 2,
+    meta: {
+      onError: () => {
+        toast.error('Unable to fetch recent reports. Please try again later.');
+      }
+    }
   });
 
   const handleRefreshAirQuality = () => {
@@ -104,6 +111,10 @@ const Index = () => {
                     style={{ animationDelay: `${0.5 + index * 0.1}s` }}
                   />
                 ))}
+              </div>
+            ) : reportsError ? (
+              <div className="eco-card p-4 text-center text-destructive">
+                Error loading reports. Please try again later.
               </div>
             ) : reports && reports.length > 0 ? (
               <div className="space-y-3">

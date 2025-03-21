@@ -1,5 +1,4 @@
 
-import { createClient } from '@supabase/supabase-js';
 import { Report, ReportType, ReportStatus } from '@/types/report';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -18,70 +17,93 @@ export const getRecentReports = async (): Promise<Report[]> => {
     // Convert from Supabase format to our app's format
     return data.map(item => ({
       id: item.id,
-      type: item.type as ReportType, // Cast to ensure it matches ReportType
+      type: item.type as ReportType,
       description: item.description,
       location: {
         name: item.location_name,
         coordinates: item.coordinates ? {
-          latitude: typeof item.coordinates === 'object' ? (item.coordinates as any).latitude : undefined,
-          longitude: typeof item.coordinates === 'object' ? (item.coordinates as any).longitude : undefined
+          latitude: item.coordinates.latitude,
+          longitude: item.coordinates.longitude
         } : undefined
       },
-      status: item.status as ReportStatus, // Cast to ensure it matches ReportStatus
+      status: item.status as ReportStatus,
       reportedAt: new Date(item.reported_at),
       mediaUrls: item.media_urls || [],
       severity: item.severity as 'Low' | 'Medium' | 'High' | 'Critical' | undefined
     }));
   } catch (error) {
     console.error('Error fetching reports:', error);
+    throw error;
+  }
+};
+
+export const submitReport = async (reportData: {
+  type: ReportType;
+  description: string;
+  location: { name: string; coordinates?: { latitude: number; longitude: number } };
+  mediaUrls?: string[];
+  severity?: 'Low' | 'Medium' | 'High' | 'Critical';
+}): Promise<string> => {
+  try {
+    const { data, error } = await supabase
+      .from('reports')
+      .insert({
+        type: reportData.type,
+        description: reportData.description,
+        location_name: reportData.location.name,
+        coordinates: reportData.location.coordinates,
+        media_urls: reportData.mediaUrls || [],
+        severity: reportData.severity,
+        status: 'Pending' // All new reports start as pending
+      })
+      .select();
     
-    // Return mock data in case of error - these mock values should match the Report type
-    return [
-      {
-        id: '1',
-        type: 'Water Pollution',
-        description: 'Oil spill observed in river near industrial area',
-        location: { name: 'Downtown River' },
-        status: 'Under Investigation',
-        reportedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        mediaUrls: ['image1.jpg', 'image2.jpg']
+    if (error) {
+      throw error;
+    }
+    
+    return data[0].id;
+  } catch (error) {
+    console.error('Error submitting report:', error);
+    throw error;
+  }
+};
+
+// Get a specific report by ID
+export const getReportById = async (reportId: string): Promise<Report | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .eq('id', reportId)
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!data) {
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      type: data.type as ReportType,
+      description: data.description,
+      location: {
+        name: data.location_name,
+        coordinates: data.coordinates ? {
+          latitude: data.coordinates.latitude,
+          longitude: data.coordinates.longitude
+        } : undefined
       },
-      {
-        id: '2',
-        type: 'Noise Pollution',
-        description: 'Excessive construction noise during quiet hours',
-        location: { name: 'Residential Zone B' },
-        status: 'Resolved',
-        reportedAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-        mediaUrls: []
-      },
-      {
-        id: '3',
-        type: 'Air Pollution',
-        description: 'Heavy smoke coming from factory chimney outside permitted hours',
-        location: { name: 'Industrial Park' },
-        status: 'Critical',
-        reportedAt: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
-        mediaUrls: ['smoke.jpg']
-      },
-      {
-        id: '4',
-        type: 'Chemical Spill',
-        description: 'Unknown chemical leaking from truck on highway',
-        location: { name: 'Route 7, Mile 23' },
-        status: 'In Progress',
-        reportedAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-        mediaUrls: ['spill1.jpg', 'spill2.jpg']
-      },
-      {
-        id: '5',
-        type: 'Water Pollution',
-        description: 'Algae bloom observed in community lake',
-        location: { name: 'Memorial Park Lake' },
-        status: 'Under Investigation',
-        reportedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
-        mediaUrls: []
-      }
-    ];
+      status: data.status as ReportStatus,
+      reportedAt: new Date(data.reported_at),
+      mediaUrls: data.media_urls || [],
+      severity: data.severity as 'Low' | 'Medium' | 'High' | 'Critical' | undefined
+    };
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    return null;
   }
 };
