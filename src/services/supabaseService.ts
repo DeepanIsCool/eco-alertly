@@ -21,9 +21,9 @@ export const getRecentReports = async (): Promise<Report[]> => {
       description: item.description,
       location: {
         name: item.location_name,
-        coordinates: item.coordinates ? {
-          latitude: item.coordinates.latitude,
-          longitude: item.coordinates.longitude
+        coordinates: item.coordinates && typeof item.coordinates === 'object' ? {
+          latitude: (item.coordinates as any).latitude,
+          longitude: (item.coordinates as any).longitude
         } : undefined
       },
       status: item.status as ReportStatus,
@@ -92,9 +92,9 @@ export const getReportById = async (reportId: string): Promise<Report | null> =>
       description: data.description,
       location: {
         name: data.location_name,
-        coordinates: data.coordinates ? {
-          latitude: data.coordinates.latitude,
-          longitude: data.coordinates.longitude
+        coordinates: data.coordinates && typeof data.coordinates === 'object' ? {
+          latitude: (data.coordinates as any).latitude,
+          longitude: (data.coordinates as any).longitude
         } : undefined
       },
       status: data.status as ReportStatus,
