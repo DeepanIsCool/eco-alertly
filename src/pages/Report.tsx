@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import PageTransition from '@/components/layout/PageTransition';
@@ -12,10 +13,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Camera, MapPin, AlertTriangle } from 'lucide-react';
+import { Camera, MapPin, AlertTriangle, X, Plus, Upload, Image } from 'lucide-react';
 import { toast } from 'sonner';
 import { ReportType } from '@/types/report';
 import { useGeolocation } from '@/hooks/use-geolocation';
+import { submitReport } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 const reportTypes: ReportType[] = [
   'Water Pollution',
@@ -43,6 +46,9 @@ const Report = () => {
     severity: '',
     location: ''
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   React.useEffect(() => {
     if (location?.name) {
@@ -62,16 +68,118 @@ const Report = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const totalFiles = [...selectedFiles, ...newFiles];
+      
+      // Limit to 5 files
+      if (totalFiles.length > 5) {
+        toast.error("Maximum of 5 files allowed");
+        return;
+      }
+
+      setSelectedFiles([...selectedFiles, ...newFiles]);
+      
+      // Create preview URLs
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPreviewUrls([...previewUrls, ...newPreviews]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    // Revoke the object URL to avoid memory leaks
+    URL.revokeObjectURL(previewUrls[index]);
+    
+    setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    setPreviewUrls(prevUrls => prevUrls.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async (): Promise<string[]> => {
+    if (selectedFiles.length === 0) return [];
+    
+    const uploadPromises = selectedFiles.map(async (file, index) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${index}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from('report_media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Calculate progress after each upload
+      const progress = ((index + 1) / selectedFiles.length) * 100;
+      setUploadProgress(progress);
+      
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('report_media')
+        .getPublicUrl(filePath);
+      
+      return publicUrl;
+    });
+    
+    try {
+      return await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast.error('Failed to upload images. Please try again.');
+      return [];
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.type) {
+      toast.error('Please select a hazard type');
+      return;
+    }
+    
+    if (!formData.description) {
+      toast.error('Please provide a description');
+      return;
+    }
+    
+    if (!formData.location) {
+      toast.error('Location is required');
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate API request
-    setTimeout(() => {
+    try {
+      // First upload any images
+      const mediaUrls = await uploadFiles();
+      
+      // Then submit the report with the media URLs
+      const reportData = {
+        type: formData.type as ReportType,
+        description: formData.description,
+        severity: formData.severity ? formData.severity as 'Low' | 'Medium' | 'High' | 'Critical' : undefined,
+        location: {
+          name: formData.location,
+          coordinates: location?.coordinates
+        },
+        mediaUrls
+      };
+      
+      await submitReport(reportData);
       toast.success('Report submitted successfully');
-      setIsSubmitting(false);
       navigate('/');
-    }, 1500);
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast.error('Failed to submit report. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -177,13 +285,68 @@ const Report = () => {
                 <h2 className="text-lg font-medium">Media</h2>
               </div>
               
-              <div className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center bg-muted/50">
-                <Camera className="w-8 h-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">Upload photos or videos of the hazard</p>
-                <Button variant="outline" type="button" className="mt-2">
-                  Select Files
-                </Button>
-              </div>
+              {previewUrls.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {previewUrls.map((url, index) => (
+                    <div key={index} className="relative rounded-md overflow-hidden h-24 bg-muted">
+                      <img 
+                        src={url} 
+                        alt={`Preview ${index}`} 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {previewUrls.length < 5 && (
+                    <label className="flex items-center justify-center bg-muted rounded-md h-24 cursor-pointer border-2 border-dashed border-muted-foreground/50 hover:border-muted-foreground/80">
+                      <Plus className="w-5 h-5 text-muted-foreground" />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange} 
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
+              
+              {previewUrls.length === 0 && (
+                <div className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center bg-muted/50">
+                  <Camera className="w-8 h-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Upload photos of the hazard</p>
+                  <label className="cursor-pointer">
+                    <Button 
+                      variant="outline" 
+                      type="button" 
+                      className="mt-2"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Select Files
+                    </Button>
+                    <input 
+                      id="file-upload"
+                      type="file" 
+                      accept="image/*" 
+                      multiple
+                      onChange={handleFileChange} 
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
+              
+              <p className="text-xs text-muted-foreground mt-2">
+                Maximum 5 images. Accepted formats: JPEG, PNG.
+              </p>
             </div>
             
             <Button 
@@ -192,7 +355,14 @@ const Report = () => {
               style={{ animationDelay: '0.4s' }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Report'}
+              {isSubmitting ? (
+                <>
+                  {uploadProgress > 0 && uploadProgress < 100 
+                    ? `Uploading... ${Math.round(uploadProgress)}%` 
+                    : 'Submitting...'
+                  }
+                </>
+              ) : 'Submit Report'}
             </Button>
           </form>
         </div>

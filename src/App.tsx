@@ -10,6 +10,7 @@ import { setToastContext } from "@/utils/toast";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import Report from "./pages/Report";
+import ReportDetail from "./pages/ReportDetail";
 import Map from "./pages/Map";
 import Stats from "./pages/Stats";
 import Profile from "./pages/Profile";
@@ -38,6 +39,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/report" element={<Report />} />
+              <Route path="/report/:id" element={<ReportDetail />} />
               <Route path="/map" element={<Map />} />
               <Route path="/stats" element={<Stats />} />
               <Route path="/profile" element={<Profile />} />
