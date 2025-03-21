@@ -49,7 +49,13 @@ const ReportImageGallery: React.FC<ReportImageGalleryProps> = ({
                 />
                 <button
                   className="absolute top-3 right-3 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80"
-                  onClick={() => document.querySelector('[data-radix-dialog-close]')?.click()}
+                  onClick={(e) => {
+                    // Find the close button and trigger it
+                    const closeButton = document.querySelector('[data-radix-dialog-close]') as HTMLElement;
+                    if (closeButton) {
+                      closeButton.click();
+                    }
+                  }}
                 >
                   <X className="w-4 h-4" />
                 </button>
