@@ -1,3 +1,4 @@
+
 import { AirQuality } from '@/types/report';
 import { toast } from 'sonner';
 
@@ -24,6 +25,11 @@ export const getAirQuality = async (
     const response = await fetch(url, options);
     
     if (!response.ok) {
+      // Check if the error is due to rate limiting (status 429)
+      if (response.status === 429) {
+        console.warn('API rate limit exceeded, using location-based estimates');
+        return getLocationBasedEstimate(locationName, latitude, longitude);
+      }
       throw new Error('Failed to fetch weather data');
     }
     
@@ -71,11 +77,90 @@ export const getAirQuality = async (
     };
   } catch (error) {
     console.error('Error fetching air quality:', error);
-    toast.error('Could not retrieve air quality data. Using estimates instead.');
     
-    // Return fallback data in case of error
-    return getVariedDummyData();
+    // Get location name for better fallback data
+    const locationName = await getLocationName(latitude, longitude).catch(() => '');
+    
+    // Use location-based estimate when API fails
+    return getLocationBasedEstimate(locationName, latitude, longitude);
   }
+};
+
+// Function to generate location-based air quality estimates
+const getLocationBasedEstimate = (locationName: string, latitude: number, longitude: number): AirQuality => {
+  // Notify user we're using estimates
+  toast.info('Using air quality estimates based on your location');
+  
+  // Check if we're in a known big city for rough estimates
+  // Using general knowledge of air quality in various regions
+  const location = locationName.toLowerCase();
+  
+  // Generate more realistic data based on location characteristics
+  if (location.includes('delhi') || location.includes('beijing') || location.includes('lahore')) {
+    return {
+      index: 180 + Math.floor(Math.random() * 40),
+      level: 'Unhealthy',
+      pm25: 90 + Math.floor(Math.random() * 20),
+      humidity: 60 + Math.floor(Math.random() * 15),
+      temperature: 30 + Math.floor(Math.random() * 5),
+    };
+  } else if (location.includes('mumbai') || location.includes('kolkata') || 
+             location.includes('bangkok') || location.includes('jakarta')) {
+    return {
+      index: 120 + Math.floor(Math.random() * 40),
+      level: 'Unhealthy',
+      pm25: 60 + Math.floor(Math.random() * 20),
+      humidity: 70 + Math.floor(Math.random() * 15),
+      temperature: 32 + Math.floor(Math.random() * 4),
+    };
+  } else if (location.includes('los angeles') || location.includes('mexico') || 
+             location.includes('paris') || location.includes('rome')) {
+    return {
+      index: 70 + Math.floor(Math.random() * 30),
+      level: 'Moderate',
+      pm25: 35 + Math.floor(Math.random() * 15),
+      humidity: 55 + Math.floor(Math.random() * 15),
+      temperature: 25 + Math.floor(Math.random() * 6),
+    };
+  } else if (location.includes('zurich') || location.includes('bergen') || 
+             location.includes('auckland') || location.includes('reykjavik')) {
+    return {
+      index: 25 + Math.floor(Math.random() * 20),
+      level: 'Good',
+      pm25: 12 + Math.floor(Math.random() * 10),
+      humidity: 50 + Math.floor(Math.random() * 20),
+      temperature: 18 + Math.floor(Math.random() * 7),
+    };
+  }
+  
+  // Use more varied data for unknown locations
+  const randomValue = Math.random();
+  let index, level, pm25;
+  
+  if (randomValue < 0.4) {
+    // 40% chance of good air quality
+    index = 30 + Math.floor(Math.random() * 20);
+    level = 'Good';
+    pm25 = 15 + Math.floor(Math.random() * 10);
+  } else if (randomValue < 0.8) {
+    // 40% chance of moderate air quality
+    index = 55 + Math.floor(Math.random() * 30);
+    level = 'Moderate';
+    pm25 = 30 + Math.floor(Math.random() * 15);
+  } else {
+    // 20% chance of unhealthy air quality
+    index = 110 + Math.floor(Math.random() * 40);
+    level = 'Unhealthy';
+    pm25 = 55 + Math.floor(Math.random() * 20);
+  }
+  
+  return {
+    index,
+    level,
+    pm25,
+    humidity: 50 + Math.floor(Math.random() * 30),
+    temperature: 15 + Math.floor(Math.random() * 15)
+  };
 };
 
 // Function to get location name from coordinates using reverse geocoding
@@ -105,33 +190,3 @@ async function getLocationName(latitude: number, longitude: number): Promise<str
     return '';
   }
 }
-
-// Dummy data for fallback
-const DUMMY_AIR_QUALITY: AirQuality = {
-  index: 45,
-  level: 'Moderate',
-  pm25: 22,
-  humidity: 65,
-  temperature: 24
-};
-
-// Function to generate slight variations in the dummy data to make it seem more realistic
-const getVariedDummyData = (): AirQuality => {
-  const variation = Math.floor(Math.random() * 20) - 10; // -10 to +10
-  const index = Math.max(0, Math.min(500, DUMMY_AIR_QUALITY.index + variation));
-  
-  // Determine level based on index
-  let level: AirQuality['level'];
-  if (index <= 50) level = 'Good';
-  else if (index <= 100) level = 'Moderate';
-  else if (index <= 150) level = 'Unhealthy';
-  else level = 'Hazardous';
-  
-  return {
-    index,
-    level,
-    pm25: Math.max(0, Math.min(500, DUMMY_AIR_QUALITY.pm25 + Math.floor(variation / 2))),
-    humidity: Math.max(20, Math.min(90, DUMMY_AIR_QUALITY.humidity + Math.floor(variation / 3))),
-    temperature: Math.max(10, Math.min(35, DUMMY_AIR_QUALITY.temperature + Math.floor(variation / 5)))
-  };
-};

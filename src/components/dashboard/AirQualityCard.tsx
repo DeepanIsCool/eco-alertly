@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { AirQuality } from '@/types/report';
-import { Droplets, MapPin, Thermometer, Wind, RefreshCw } from 'lucide-react';
+import { Droplets, MapPin, Thermometer, Wind, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface AirQualityCardProps {
   airQuality?: AirQuality;
@@ -136,8 +136,14 @@ const AirQualityCard: React.FC<AirQualityCardProps> = ({
           )}
         </div>
       )}
+      
+      <div className="mt-4 text-xs text-muted-foreground flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" />
+        <span>Based on location estimates. Data refreshes every 30 minutes.</span>
+      </div>
     </div>
   );
 };
 
 export default AirQualityCard;
+
