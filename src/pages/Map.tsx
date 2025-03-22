@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import PageTransition from '@/components/layout/PageTransition';
 import Navigation from '@/components/layout/Navigation';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useGeolocation } from '@/hooks/use-geolocation';
@@ -56,6 +56,20 @@ const Map = () => {
     if (location?.coordinates) {
       fetchAirQuality();
       setPosition([location.coordinates.latitude, location.coordinates.longitude]);
+      
+      // Show location information in a toast
+      toast.info(
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          <div>
+            <div className="font-medium">Location detected</div>
+            <div className="text-sm text-muted-foreground">{location.name}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {location.coordinates.latitude.toFixed(6)}, {location.coordinates.longitude.toFixed(6)}
+            </div>
+          </div>
+        </div>
+      );
     }
   }, [location]);
 
