@@ -11,11 +11,11 @@ import { getAirQuality } from '@/services/airQualityService';
 import AirQualityCard from '@/components/dashboard/AirQualityCard';
 
 const Map = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [showAlerts, setShowAlerts] = useState(false);
   const [airQuality, setAirQuality] = useState<any>(null);
   const { location, loading: locationLoading, error: locationError } = useGeolocation();
+  const [mapImageUrl, setMapImageUrl] = useState<string | null>(null);
   
   const [mapConfig, setMapConfig] = useState({
     zoom: 3,
@@ -46,11 +46,14 @@ const Map = () => {
   };
 
   const loadMapTile = async () => {
-    if (!mapRef.current) return;
-    
     setLoading(true);
     
     try {
+      // Revoke previous object URL if it exists to prevent memory leaks
+      if (mapImageUrl && mapImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(mapImageUrl);
+      }
+      
       const { zoom, centerX, centerY } = mapConfig;
       const url = `https://maptiles.p.rapidapi.com/es/map/v1/${zoom}/${centerX}/${centerY}.png`;
       const options = {
@@ -70,13 +73,8 @@ const Map = () => {
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
       
-      // Clear previous map content and insert the new image
-      mapRef.current.innerHTML = '';
-      const img = document.createElement('img');
-      img.src = imageUrl;
-      img.className = 'w-full h-full object-cover';
-      mapRef.current.appendChild(img);
-      
+      // Update the state with the new image URL
+      setMapImageUrl(imageUrl);
       setLoading(false);
     } catch (error) {
       console.error('Error loading map:', error);
@@ -88,15 +86,11 @@ const Map = () => {
   // Load map tile when component mounts or config changes
   useEffect(() => {
     loadMapTile();
-    // Cleanup object URLs when component unmounts
+    
+    // Cleanup object URLs when component unmounts or when config changes
     return () => {
-      if (mapRef.current) {
-        const images = mapRef.current.querySelectorAll('img');
-        images.forEach(img => {
-          if (img.src.startsWith('blob:')) {
-            URL.revokeObjectURL(img.src);
-          }
-        });
+      if (mapImageUrl && mapImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(mapImageUrl);
       }
     };
   }, [mapConfig]);
@@ -148,10 +142,15 @@ const Map = () => {
         <div className="eco-container space-y-6">
           <div className="relative bg-muted rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[400px] animate-fade-in">
             {/* Map container */}
-            <div 
-              ref={mapRef} 
-              className="absolute inset-0 bg-muted-foreground/10"
-            >
+            <div className="absolute inset-0 bg-muted-foreground/10">
+              {mapImageUrl && !loading && (
+                <img 
+                  src={mapImageUrl} 
+                  alt="Map tile" 
+                  className="w-full h-full object-cover"
+                />
+              )}
+              
               {loading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
                   <Loader2 className="w-12 h-12 mb-4 animate-spin" />
