@@ -9,19 +9,53 @@ import { toast } from 'sonner';
 import { useGeolocation } from '@/hooks/use-geolocation';
 import { getAirQuality } from '@/services/airQualityService';
 import AirQualityCard from '@/components/dashboard/AirQualityCard';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Icon } from 'leaflet';
+
+// Fix for default marker icon in Leaflet
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Create custom marker icon
+const customIcon = new Icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41]
+});
+
+// Component to recenter map when location changes
+const RecenterMapView = ({ coords }: { coords: [number, number] | null }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (coords) {
+      map.setView(coords, map.getZoom());
+    }
+  }, [coords, map]);
+  
+  return null;
+};
 
 const Map = () => {
-  const [loading, setLoading] = useState(true);
   const [showAlerts, setShowAlerts] = useState(false);
   const [airQuality, setAirQuality] = useState<any>(null);
   const { location, loading: locationLoading, error: locationError } = useGeolocation();
-  const [mapImageUrl, setMapImageUrl] = useState<string | null>(null);
+  
+  // Default position (will be updated when location is available)
+  const [position, setPosition] = useState<[number, number] | null>(null);
   
   // Load air quality data when location is available
   useEffect(() => {
     if (location?.coordinates) {
       fetchAirQuality();
-      loadMapForLocation(location.coordinates.latitude, location.coordinates.longitude);
+      setPosition([location.coordinates.latitude, location.coordinates.longitude]);
     }
   }, [location]);
 
@@ -40,59 +74,6 @@ const Map = () => {
     }
   };
 
-  const loadMapForLocation = async (latitude: number, longitude: number) => {
-    setLoading(true);
-    
-    try {
-      // Revoke previous object URL if it exists to prevent memory leaks
-      if (mapImageUrl && mapImageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(mapImageUrl);
-      }
-      
-      // Convert lat/long to tile coordinates using Web Mercator projection
-      const zoom = 12; // Higher zoom level for better detail
-      const n = Math.pow(2, zoom);
-      const x = Math.floor((longitude + 180) / 360 * n);
-      const latRad = latitude * Math.PI / 180;
-      const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
-      
-      const url = `https://maptiles.p.rapidapi.com/es/map/v1/${zoom}/${x}/${y}.png`;
-      const options = {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-key': '297c2d5a7fmsh3b80b8d10389ff1p102ab1jsnc34fcd6334a7',
-          'x-rapidapi-host': 'maptiles.p.rapidapi.com'
-        }
-      };
-
-      const response = await fetch(url, options);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load map tile');
-      }
-      
-      const blob = await response.blob();
-      const imageUrl = URL.createObjectURL(blob);
-      
-      // Update the state with the new image URL
-      setMapImageUrl(imageUrl);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading map:', error);
-      toast.error('Failed to load map tile');
-      setLoading(false);
-    }
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (mapImageUrl && mapImageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(mapImageUrl);
-      }
-    };
-  }, [mapImageUrl]);
-
   const toggleEnvironmentalAlerts = () => {
     setShowAlerts(!showAlerts);
     
@@ -108,35 +89,45 @@ const Map = () => {
       <PageTransition className="pb-20">
         <div className="eco-container space-y-6">
           {/* Map container - smaller size */}
-          <div className="relative bg-muted rounded-xl overflow-hidden h-[350px] animate-fade-in mx-auto">
-            <div className="absolute inset-0 bg-muted-foreground/10">
-              {mapImageUrl && !loading && (
-                <img 
-                  src={mapImageUrl} 
-                  alt="Map tile" 
-                  className="w-full h-full object-cover"
-                />
-              )}
-              
-              {loading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-                  <Loader2 className="w-12 h-12 mb-4 animate-spin" />
-                  <p className="text-sm">Loading map...</p>
-                </div>
-              )}
-              
-              {locationError && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-                  <AlertTriangle className="w-12 h-12 mb-4" />
-                  <p className="text-sm text-center px-4">
-                    Unable to access your location.<br />
-                    Please enable location services to see your area map.
-                  </p>
-                </div>
-              )}
-            </div>
+          <div className="relative rounded-xl overflow-hidden h-[350px] animate-fade-in mx-auto">
+            {locationLoading ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                <Loader2 className="w-12 h-12 mb-4 animate-spin" />
+                <p className="text-sm">Getting your location...</p>
+              </div>
+            ) : locationError ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                <AlertTriangle className="w-12 h-12 mb-4" />
+                <p className="text-sm text-center px-4">
+                  Unable to access your location.<br />
+                  Please enable location services to see your area map.
+                </p>
+              </div>
+            ) : (
+              position && (
+                <MapContainer 
+                  center={position} 
+                  zoom={13} 
+                  scrollWheelZoom={true}
+                  style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
+                  attributionControl={false}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={position} icon={customIcon}>
+                    <Popup>
+                      You are here<br/>
+                      {location?.name || 'Current Location'}
+                    </Popup>
+                  </Marker>
+                  <RecenterMapView coords={position} />
+                </MapContainer>
+              )
+            )}
             
-            <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg p-3 flex items-center gap-2">
+            <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg p-3 flex items-center gap-2 z-[1000]">
               <div className="w-3 h-3 rounded-full bg-eco-green"></div>
               <span className="text-xs">Good</span>
               
