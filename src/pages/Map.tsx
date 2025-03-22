@@ -1,9 +1,9 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import PageTransition from '@/components/layout/PageTransition';
 import Navigation from '@/components/layout/Navigation';
-import { MapPin, AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useGeolocation } from '@/hooks/use-geolocation';
@@ -17,16 +17,11 @@ const Map = () => {
   const { location, loading: locationLoading, error: locationError } = useGeolocation();
   const [mapImageUrl, setMapImageUrl] = useState<string | null>(null);
   
-  const [mapConfig, setMapConfig] = useState({
-    zoom: 3,
-    centerX: 2,
-    centerY: 2
-  });
-
   // Load air quality data when location is available
   useEffect(() => {
     if (location?.coordinates) {
       fetchAirQuality();
+      loadMapForLocation(location.coordinates.latitude, location.coordinates.longitude);
     }
   }, [location]);
 
@@ -45,7 +40,7 @@ const Map = () => {
     }
   };
 
-  const loadMapTile = async () => {
+  const loadMapForLocation = async (latitude: number, longitude: number) => {
     setLoading(true);
     
     try {
@@ -54,8 +49,14 @@ const Map = () => {
         URL.revokeObjectURL(mapImageUrl);
       }
       
-      const { zoom, centerX, centerY } = mapConfig;
-      const url = `https://maptiles.p.rapidapi.com/es/map/v1/${zoom}/${centerX}/${centerY}.png`;
+      // Convert lat/long to tile coordinates using Web Mercator projection
+      const zoom = 12; // Higher zoom level for better detail
+      const n = Math.pow(2, zoom);
+      const x = Math.floor((longitude + 180) / 360 * n);
+      const latRad = latitude * Math.PI / 180;
+      const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+      
+      const url = `https://maptiles.p.rapidapi.com/es/map/v1/${zoom}/${x}/${y}.png`;
       const options = {
         method: 'GET',
         headers: {
@@ -83,48 +84,14 @@ const Map = () => {
     }
   };
 
-  // Load map tile when component mounts or config changes
+  // Cleanup on unmount
   useEffect(() => {
-    loadMapTile();
-    
-    // Cleanup object URLs when component unmounts or when config changes
     return () => {
       if (mapImageUrl && mapImageUrl.startsWith('blob:')) {
         URL.revokeObjectURL(mapImageUrl);
       }
     };
-  }, [mapConfig]);
-
-  // Navigation controls
-  const moveMap = (direction: 'up' | 'down' | 'left' | 'right') => {
-    setMapConfig(prev => {
-      const newConfig = { ...prev };
-      
-      switch (direction) {
-        case 'up':
-          newConfig.centerY = Math.max(0, prev.centerY - 1);
-          break;
-        case 'down':
-          newConfig.centerY = prev.centerY + 1;
-          break;
-        case 'left':
-          newConfig.centerX = Math.max(0, prev.centerX - 1);
-          break;
-        case 'right':
-          newConfig.centerX = prev.centerX + 1;
-          break;
-      }
-      
-      return newConfig;
-    });
-  };
-
-  const adjustZoom = (delta: number) => {
-    setMapConfig(prev => ({
-      ...prev,
-      zoom: Math.min(Math.max(1, prev.zoom + delta), 6)
-    }));
-  };
+  }, [mapImageUrl]);
 
   const toggleEnvironmentalAlerts = () => {
     setShowAlerts(!showAlerts);
@@ -140,8 +107,8 @@ const Map = () => {
       
       <PageTransition className="pb-20">
         <div className="eco-container space-y-6">
-          <div className="relative bg-muted rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[400px] animate-fade-in">
-            {/* Map container */}
+          {/* Map container - smaller size */}
+          <div className="relative bg-muted rounded-xl overflow-hidden h-[350px] animate-fade-in mx-auto">
             <div className="absolute inset-0 bg-muted-foreground/10">
               {mapImageUrl && !loading && (
                 <img 
@@ -154,44 +121,19 @@ const Map = () => {
               {loading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
                   <Loader2 className="w-12 h-12 mb-4 animate-spin" />
-                  <p className="text-sm">Loading map tiles...</p>
+                  <p className="text-sm">Loading map...</p>
                 </div>
               )}
-            </div>
-            
-            {/* Map navigation controls */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg p-2">
-              <Button variant="outline" size="icon" onClick={() => moveMap('up')}>
-                <span className="sr-only">Pan up</span>
-                <span className="block rotate-180">↓</span>
-              </Button>
               
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => moveMap('left')}>
-                  <span className="sr-only">Pan left</span>
-                  <span className="block rotate-180">→</span>
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => moveMap('right')}>
-                  <span className="sr-only">Pan right</span>
-                  <span>→</span>
-                </Button>
-              </div>
-              
-              <Button variant="outline" size="icon" onClick={() => moveMap('down')}>
-                <span className="sr-only">Pan down</span>
-                <span>↓</span>
-              </Button>
-              
-              <div className="flex gap-2 mt-2">
-                <Button variant="outline" size="icon" onClick={() => adjustZoom(-1)}>
-                  <span className="sr-only">Zoom out</span>
-                  <span>-</span>
-                </Button>
-                <Button variant="outline" size="icon" onClick={() => adjustZoom(1)}>
-                  <span className="sr-only">Zoom in</span>
-                  <span>+</span>
-                </Button>
-              </div>
+              {locationError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+                  <AlertTriangle className="w-12 h-12 mb-4" />
+                  <p className="text-sm text-center px-4">
+                    Unable to access your location.<br />
+                    Please enable location services to see your area map.
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg p-3 flex items-center gap-2">
