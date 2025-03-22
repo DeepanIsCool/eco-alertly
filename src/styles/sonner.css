@@ -68,9 +68,45 @@
   font-size: 0.75rem;
 }
 
+/* Custom close button styling - positioning outside the toast */
+[data-sonner-toast] [data-close-button] {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--background);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  opacity: 1;
+  visibility: visible;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background-color: var(--secondary);
+  color: var(--foreground);
+}
+
 /* Dark mode adjustments */
 .dark [data-sonner-toast] {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark [data-sonner-toast] [data-close-button] {
+  background-color: var(--card);
+  border-color: var(--border);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.dark [data-sonner-toast] [data-close-button]:hover {
+  background-color: var(--secondary);
 }
 
 /* Toast animation */
