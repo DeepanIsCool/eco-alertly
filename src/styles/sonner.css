@@ -84,8 +84,8 @@
   border: 1px solid var(--border);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 10;
-  opacity: 1;
-  visibility: visible;
+  opacity: 1 !important;
+  visibility: visible !important;
   transition: background-color 0.2s, color 0.2s;
 }
 
